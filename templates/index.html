@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>okx查询</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="shortcut icon" href="/assets/imgs/favicon.ico" type="image/x-icon">
+
+</head>
+
+<body>
+    <h1>查询</h1>
+    <form id="queryForm">
+        <label for="queryType">查询类型:</label>
+        <select id="queryType" name="queryType">
+            <option value="index">实时价格查询</option>
+            <option value="exchangeRate">汇率查询</option>
+            <option value="indexCandles">指数K线查询</option> <!-- 新增的查询类型 -->
+        </select>
+        <div id="queryFields">
+            <!-- 输入框根据查询类型动态显示或隐藏 -->
+            <div id="quoteCcyField">
+                <label for="quoteCcy">币种(USD/USDT/BTC/USDC):</label>
+                <input type="text" id="quoteCcy" name="quoteCcy">
+            </div>
+            <div id="instIdField">
+                <label for="instId">币对(如:BTC-USDT):</label>
+                <input type="text" id="instId" name="instId">
+            </div>
+            <div id="afterField" style="display:none;"> <!-- 初始隐藏 -->
+                <label for="after">时间戳之前:</label>
+                <input type="text" id="after" name="after">
+            </div>
+            <div id="beforeField" style="display:none;"> <!-- 初始隐藏 -->
+                <label for="before">时间戳之后:</label>
+                <input type="text" id="before" name="before">
+            </div>
+            <div id="barField" style="display:none;"> <!-- 初始隐藏 -->
+                <label for="bar">时间粒度(默认值1m[1m/3m/5m/15m/30m/1H/2H/4H]):</label>
+                <input type="text" id="bar" name="bar">
+            </div>
+            <div id="limitField" style="display:none;"> <!-- 初始隐藏 -->
+                <label for="limit">返回结果数量(默认100):</label>
+                <input type="text" id="limit" name="limit">
+            </div>
+        </div>
+        <button type="submit">查询</button>
+    </form>
+    <div id="results"></div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('queryForm');
+            const resultsDiv = document.getElementById('results');
+            const queryFieldsDiv = document.getElementById('queryFields');
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(form);
+                fetch('/task', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 清空上一次的结果
+                        resultsDiv.innerHTML = '';
+
+                        // 处理结果
+                        const resultTable = document.createElement('table');
+                        if (formData.get('queryType') === 'index') {
+                            resultTable.innerHTML = `
+                                <tr>
+                                    <th>币对</th>
+                                    <th>最新价格</th>
+                                    <th>24h最高</th>
+                                    <th>24h最低</th>
+                                    <th>24h开盘</th>
+                                    <th>UTC 0 开盘</th>
+                                    <th>UTC+8 开盘</th>
+                                    <th>时间</th>
+                                </tr>
+                            `;
+                            data.forEach(entry => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${entry.instId}</td>
+                                    <td style="color: red;">${entry.idxPx}</td>
+                                    <td>${entry.high24h}</td>
+                                    <td>${entry.low24h}</td>
+                                    <td>${entry.open24h}</td>
+                                    <td>${entry.sodUtc0}</td>
+                                    <td>${entry.sodUtc8}</td>
+                                    <td>${new Date(parseInt(entry.ts)).toLocaleString()}</td>
+                                `;
+                                resultTable.appendChild(row);
+                            });
+                        } else if (formData.get('queryType') === 'exchangeRate') {
+                            resultTable.innerHTML = `
+                                <tr>
+                                    <th>USD/CNY 汇率</th>
+                                </tr>
+                            `;
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${data[0].usdCny}</td>
+                            `;
+                            resultTable.appendChild(row);
+                        } else if (formData.get('queryType') === 'indexCandles') {
+                            resultTable.innerHTML = `
+                                <tr>
+                                    <th>开始时间</th>
+                                    <th>初价</th>
+                                    <th>最高价</th>
+                                    <th>最低价</th>
+                                    <th>末价</th>
+                                    <th>K线状态</th>
+                                </tr>
+                            `;
+                            data.forEach(candle => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${new Date(parseInt(candle.ts)).toLocaleString()}</td>
+                                    <td>${candle.o}</td>
+                                    <td>${candle.h}</td>
+                                    <td>${candle.l}</td>
+                                    <td>${candle.c}</td>
+                                    <td>${candle.confirm}</td>
+                                `;
+                                resultTable.appendChild(row);
+                            });
+                        }
+                        resultsDiv.appendChild(resultTable);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        resultsDiv.innerHTML = '<p>数据错误</p>';
+                    });
+            });
+
+            // 监听查询类型选择框的变化
+            const queryTypeSelect = document.getElementById('queryType');
+            queryTypeSelect.addEventListener('change', function () {
+                const selectedQueryType = queryTypeSelect.value;
+                // 根据查询类型显示或隐藏相关的查询参数输入框
+                const quoteCcyField = document.getElementById('quoteCcyField');
+                const instIdField = document.getElementById('instIdField');
+                const afterField = document.getElementById('afterField');
+                const beforeField = document.getElementById('beforeField');
+                const barField = document.getElementById('barField');
+                const limitField = document.getElementById('limitField');
+
+                if (selectedQueryType === 'index') {
+                    quoteCcyField.style.display = 'block';
+                    instIdField.style.display = 'block';
+                    afterField.style.display = 'none';
+                    beforeField.style.display = 'none';
+                    barField.style.display = 'none';
+                    limitField.style.display = 'none';
+                }
+                else if (selectedQueryType === 'exchangeRate') {
+                    quoteCcyField.style.display = 'none';
+                    instIdField.style.display = 'none';
+                    afterField.style.display = 'none';
+                    beforeField.style.display = 'none';
+                    barField.style.display = 'none';
+                    limitField.style.display = 'none';
+                }
+                else if (selectedQueryType === 'indexCandles') {
+                    quoteCcyField.style.display = 'none';
+                    instIdField.style.display = 'block';
+                    afterField.style.display = 'block';
+                    beforeField.style.display = 'block';
+                    barField.style.display = 'block';
+                    limitField.style.display = 'block';
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
