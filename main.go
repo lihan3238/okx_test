@@ -98,9 +98,9 @@ func executeIndexQuery(quoteCcy string, instId string) ([]IndexTicker, error) {
 
 	// 创建带有代理的HTTP客户端
 	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
-		},
+		//Transport: &http.Transport{
+		//	Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
+		//},
 	}
 
 	// 发送GET请求获取数据
@@ -137,9 +137,9 @@ func executeExchangeRateQuery() ([]ExchangeRate, error) {
 
 	// 创建带有代理的HTTP客户端
 	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
-		},
+		//Transport: &http.Transport{
+		//	Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
+		//},
 	}
 
 	// 发送GET请求获取数据
@@ -195,9 +195,9 @@ func executeIndexCandlesQuery(instId string, after string, before string, bar st
 
 	// 创建带有代理的HTTP客户端
 	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
-		},
+		//Transport: &http.Transport{
+		//	Proxy: http.ProxyURL(&url.URL{Host: "localhost:7890", Scheme: "http"}), // 设置Clash代理的地址和端口
+		//},
 	}
 
 	// 发送GET请求获取数据
