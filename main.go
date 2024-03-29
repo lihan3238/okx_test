@@ -70,7 +70,7 @@ func main() {
 		c.JSON(http.StatusOK, results)
 	})
 
-	r.Run(":8080")
+	r.Run(":8081")
 }
 
 func executeQuery(quoteCcy string, instId string, after string, before string, bar string, limit string, queryType string) (interface{}, error) {
